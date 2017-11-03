@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coocaa.myspring.dao.UserMapper">
+    <resultMap type="com.coocaa.myspring.model.User" id="usersResultMap">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="pwd" column="pwd"/>
+        <result property="salt" column="salt"/>
+        <result property="rolesId" column="roles_id"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <sql id="sql1">`id`, `user_id`, `pwd`, `salt`, `roles_id`,`status`, `create_time`</sql>
+
+    <select id="findBy" resultMap="usersResultMap" parameterType="HashMap">
+        SELECT
+        <include refid="sql1"/>
+        FROM `users`
+        <trim prefixOverrides="and" prefix="WHERE">
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userId != null">
+                and instr(user_id, #{userId})>0
+            </if>
+            <if test="rolesId != null">
+                and roles_id = #{rolesId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="unequal != null">
+                and #{unequal}
+            </if>
+        </trim>
+        <choose>
+            <when test="orderBy == null">
+                ORDER BY id DESC
+            </when>
+            <otherwise>
+                ORDER BY ${orderBy}
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="pagination_limit != null">
+                LIMIT #{pagination_limit}
+            </when>
+        </choose>
+        <choose>
+            <when test="pagination_offset != null">
+                OFFSET #{pagination_offset}
+            </when>
+        </choose>
+    </select>
+    <select id="countBy" resultType="Integer" parameterType="HashMap">
+        SELECT COUNT(*)
+        FROM `users`
+        <trim prefixOverrides="and" prefix="WHERE">
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userId != null">
+                and instr(user_id, #{userId})>0
+            </if>
+            <if test="rolesId != null">
+                and roles_id = #{rolesId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </trim>
+    </select>
+    <select id="getEntityById" parameterType="Integer" resultMap="usersResultMap">
+        SELECT
+        <include refid="sql1"/>
+        FROM `users`
+        WHERE id = #{id}
+    </select>
+    <select id="getEntityByUserId" parameterType="String" resultMap="usersResultMap">
+        SELECT
+        <include refid="sql1"/>
+        FROM `users`
+        WHERE user_id = #{userId}
+    </select>
+    <insert id="insert" parameterType="com.coocaa.myspring.model.User" useGeneratedKeys="true" keyColumn="id">
+        INSERT INTO `users` (
+        <trim suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="pwd != null">pwd,</if>
+            <if test="salt != null">salt,</if>
+            <if test="rolesId != null">roles_id,</if>
+            <if test="status != null">status,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        values (
+        <trim suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="pwd != null">#{pwd},</if>
+            <if test="salt != null">#{salt},</if>
+            <if test="rolesId != null">#{rolesId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+        <selectKey resultType="Integer" keyProperty="id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+    <update id="update" parameterType="com.coocaa.myspring.model.User">
+        UPDATE `users`
+        <set>
+            <if test="userId != null">`user_id` = #{userId},</if>
+            <if test="pwd != null">`pwd` = #{pwd},</if>
+            <if test="salt != null">`salt` = #{salt},</if>
+            <if test="rolesId != null">`roles_id` = #{rolesId},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <delete id="delete" parameterType="Integer">
+        DELETE FROM `users`
+        WHERE id = #{id}
+    </delete>
+</mapper>
