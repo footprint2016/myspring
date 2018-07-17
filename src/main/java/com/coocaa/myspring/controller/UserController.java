@@ -1,144 +1,86 @@
 package com.coocaa.myspring.controller;
 
-import com.alibaba.fastjson.JSONObject;
-import com.coocaa.myspring.model.User;
-import com.coocaa.myspring.service.UserService;
-import com.coocaa.myspring.utils.MyUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.coocaa.myspring.util.enumobj.EnumSystem;
+import com.coocaa.myspring.util.resp.RespObject;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.*;
+import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * Created by panwei on 2016/6/30.
  */
 @Controller
-@RequestMapping("user")
 public class UserController extends BaseController {
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    @Autowired
-    private UserService userService;
-
-    @RequestMapping("/getUserList")
+    @RequestMapping("/user/getUserList")
     @ResponseBody
-    public String getUserList() {
-        HashMap<String, Object> params = new HashMap<>();
-        List<User> userList = userService.findBy(params);
-        return JSONObject.toJSONString(userList);
-
+    public RespObject getUserList() {
+        RespObject respObject = new RespObject();
+        RespObject userList = userService.getUserList();
+        respObject.setData(userList);
+        return respObject;
     }
 
-    public String getViews(String str) {
-        return "user/" + str;
+    @RequestMapping("/loginPage")
+    public String loginPage() {
+        return "login";
+    }
+
+    @RequestMapping(value = "login", method = {RequestMethod.POST}, produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public RespObject login(String loginName, String password) {
+        RespObject respObject = new RespObject();
+        UsernamePasswordToken token = new UsernamePasswordToken(loginName, password);
+        Subject currentUser = SecurityUtils.getSubject();
+        try {
+            logger.info("对用户[" + loginName + "]进行登录验证..验证开始");
+            currentUser.login(token);
+            logger.info("对用户[" + loginName + "]进行登录验证..验证通过");
+        } catch (UnknownAccountException uae) {
+            logger.info("对用户[" + loginName + "]进行登录验证..验证未通过,未知账户");
+            respObject.setFailResult("未知账户");
+            currentUser.logout();
+        } catch (IncorrectCredentialsException ice) {
+            logger.info("对用户[" + loginName + "]进行登录验证..验证未通过,错误的凭证");
+            respObject.setFailResult("密码不正确");
+            currentUser.logout();
+        } catch (LockedAccountException lae) {
+            logger.info("对用户[" + loginName + "]进行登录验证..验证未通过,账户已锁定");
+            respObject.setFailResult("账户已锁定");
+            currentUser.logout();
+        } catch (ExcessiveAttemptsException eae) {
+            logger.info("对用户[" + loginName + "]进行登录验证..验证未通过,错误次数过多");
+            respObject.setFailResult("用户名或密码错误次数过多");
+            currentUser.logout();
+        } catch (AuthenticationException ae) {
+            //通过处理Shiro的运行时AuthenticationException就可以控制用户登录失败或密码错误时的情景
+            logger.info("对用户[" + loginName + "]进行登录验证..验证未通过,堆栈轨迹如下");
+            ae.printStackTrace();
+            respObject.setFailResult("用户名或密码不正确");
+            currentUser.logout();
+        }
+        logger.info("登录是否成功: " + currentUser.isAuthenticated());
+        if (EnumSystem.SYSTEM_FAILED.getCode().equals(respObject.getCode())) {
+            token.clear();
+        }
+        return respObject;
     }
 
     @RequestMapping("/index")
     public String index() {
-        return getViews("index");
+        return "index";
     }
 
-    @RequestMapping("/get_users_json")
-    @ResponseBody
-    public Object getUsersJson(Integer start, Integer length, HttpServletRequest request, User User) {
-        HashMap<String, Object> result = new HashMap<>();
 
-        HashMap<String, Object> params = new HashMap<>();
-        params = MyUtils.DataTables.getRequestSortParams(request, params);
-        params = MyUtils.Conversion.objToMap(params, User, true);
-        Integer icount = userService.countBy(params);
-        result.put("recordsTotal", icount);//总记录数
-        result.put("recordsFiltered", icount);//过滤后的总记录数
-
-        params.put("pagination_limit", length);
-        params.put("pagination_offset", start);
-        List<User> list = userService.findBy(params);
-        List<HashMap<String, Object>> lists = new ArrayList<>();
-        for (User item : list) {
-            HashMap<String, Object> map = new HashMap<>();
-            MyUtils.Conversion.objToMap(map, item, false);
-            lists.add(map);
-        }
-        result.put("data", lists);
-        return JSONObject.toJSONString(result);
-    }
-
-    @RequestMapping("/checkUsersId")
-    @ResponseBody
-    public Object checkUsersId(String userId, Integer id) {
-        if (!userId.isEmpty()) {
-            HashMap<String, Object> params = new HashMap<>();
-            params.put("userId", userId);
-            if (id != null) {
-                params.put("unequal", "user_id!=" + id);
-            }
-            List<User> userse = userService.findBy(params);
-            if (userse.size() > 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @RequestMapping("/modify")
-    public String modify(Integer id, ModelMap model) {
-        User user = new User();
-        if (id != null) {
-            user = userService.getEntityById(id);
-        } else {
-            user.setStatus(0);
-            user.setRolesId(0);
-        }
-
-        model.put("model", user);
-        return getViews("modify");
-    }
-
-    @RequestMapping("/add")
-    public Object add(User user) {
-        if (user.getId() == null) {
-            user.setPwd(user.getPwd());
-            userService.insert(user);
-        } else {
-            if (user.getPwd() != null && !user.getPwd().equals("")) {
-                user.setPwd(user.getPwd());
-            } else {
-                user.setPwd(null);
-            }
-            userService.update(user);
-        }
-        return true;
-    }
-
-    @RequestMapping("/changeStatus")
-    public Object changeStatus(Integer id, Integer status) {
-        User user = userService.getEntityById(id);
-        if (user != null) {
-            user.setStatus(status);
-            userService.update(user);
-        }
-        return true;
-    }
-
-    @RequestMapping("/del")
-    public Object delete(Integer id) {
-        if (id == null || id.equals(0)) {
-            return false;
-        } else {
-            User user = userService.getEntityById(id);
-            if (user != null)
-                userService.delete(id);
-            return true;
-        }
-    }
-
-    public static void main(String[] args) {
-        String str = "";
-        System.out.println();
+    @RequestMapping("/unauthorized")
+    public String unauthorized() {
+        return "unauthorized";
     }
 }

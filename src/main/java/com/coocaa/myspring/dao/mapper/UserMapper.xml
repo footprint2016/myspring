@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coocaa.myspring.dao.UserMapper">
+    <resultMap type="com.coocaa.myspring.po.User" id="usersResultMap">
+        <id property="id" column="id"/>
+        <result property="officeId" column="office_id"/>
+        <result property="loginName" column="login_name"/>
+        <result property="salt" column="salt"/>
+        <result property="password" column="password"/>
+        <result property="no" column="no"/>
+        <result property="name" column="name"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="mobile" column="mobile"/>
+        <result property="userType" column="user_type"/>
+        <result property="loginIp" column="login_ip"/>
+        <result property="loginDate" column="login_date"/>
+        <result property="loginFlag" column="login_flag"/>
+        <result property="remarks" column="remarks"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createDate" column="create_date"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateDate" column="update_date"/>
+    </resultMap>
+    <sql id="sql1">
+      `id`, `office_id`, `login_name`, `salt`, `password`, `no`, `name`, `email`, `phone`, `mobile`, `user_type`,
+      `login_ip`, `login_date`, `login_flag`, `remarks`, `del_flag`, `create_by`, `create_date`, `update_by`, `update_date`
+    </sql>
+</mapper>

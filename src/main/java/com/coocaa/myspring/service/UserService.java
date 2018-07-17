@@ -1,44 +1,28 @@
 package com.coocaa.myspring.service;
 
-import com.coocaa.myspring.dao.UserMapper;
-import com.coocaa.myspring.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.coocaa.myspring.po.User;
+import com.coocaa.myspring.util.resp.RespObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
 
 /**
  * Created by panwei on 2016/6/30.
  */
 @Service
-public class UserService {
+public class UserService extends BaseService {
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    @Autowired
-    UserMapper userMapper;
-
-    public void insert(User user) {
-        userMapper.insert(user);
+    public RespObject getUserList() {
+        RespObject respObject = new RespObject();
+        List<User> userList = userMapper.selectAll();
+        respObject.setData(userList);
+        return respObject;
     }
 
-    public void update(User user) {
-        userMapper.update(user);
+    public User selectOne(String loginName) {
+        return userMapper.selectOne(new User(loginName));
     }
-
-    public void delete(Integer id) {
-        userMapper.delete(id);
-    }
-
-    public Integer countBy(HashMap<?, ?> params) {
-        return userMapper.countBy(params);
-    }
-
-    public List<User> findBy(HashMap<?, ?> params) {
-        return userMapper.findBy(params);
-    }
-
-    public User getEntityById(Integer id) {
-        return userMapper.getEntityById(id);
-    }
-
 }
