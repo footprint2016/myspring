@@ -38,6 +38,7 @@
     <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
         <property name="globalSessionTimeout" value="1800000"/>
         <property name="deleteInvalidSessions" value="true"/>
+        <property name="sessionIdUrlRewritingEnabled" value="false"/>
     </bean>
     <!-- Realm 实现 -->
     <bean id="userRealm" class="com.coocaa.myspring.realm.UserRealm">
